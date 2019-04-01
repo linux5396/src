@@ -744,13 +744,14 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an iterator over the elements in this list in proper sequence.
+     * 按正确的顺序返回列表中元素的迭代器。
+     * <p>
      *
-     * <p>The returned iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
-     *
-     * @return an iterator over the elements in this list in proper sequence
+     * @return 按适当顺序遍历列表中的元素的迭代器
+     * 集合类调用iterator()都是new一个该集合类内部实现的一个迭代器。
      */
     public Iterator<E> iterator() {
+        //Itr为内部类；
         return new Itr();
     }
 
@@ -769,6 +770,7 @@ public class ArrayList<E> extends AbstractList<E>
 
         /**
          * 通过判断当前的光标与数组列表的长度，来判断是否有下一个元素；
+         *
          * @return
          */
         public boolean hasNext() {
@@ -790,7 +792,7 @@ public class ArrayList<E> extends AbstractList<E>
              */
             if (i >= elementData.length)
                 //TODO 修改了异常的参数。
-               throw new ConcurrentModificationException("happen exception while iterating the array list by iterator,due to write ops");
+                throw new ConcurrentModificationException("happen exception while iterating the array list by iterator,due to write ops");
 
             //移动光标到下一位
             cursor = i + 1;
@@ -1300,38 +1302,6 @@ public class ArrayList<E> extends AbstractList<E>
      * Index-based split-by-two, lazily initialized Spliterator
      */
     final class ArrayListSpliterator implements Spliterator<E> {
-
-        /*
-         * If ArrayLists were immutable, or structurally immutable (no
-         * adds, removes, etc), we could implement their spliterators
-         * with Arrays.spliterator. Instead we detect as much
-         * interference during traversal as practical without
-         * sacrificing much performance. We rely primarily on
-         * modCounts. These are not guaranteed to detect concurrency
-         * violations, and are sometimes overly conservative about
-         * within-thread interference, but detect enough problems to
-         * be worthwhile in practice. To carry this out, we (1) lazily
-         * initialize fence and expectedModCount until the latest
-         * point that we need to commit to the state we are checking
-         * against; thus improving precision.  (This doesn't apply to
-         * SubLists, that create spliterators with current non-lazy
-         * values).  (2) We perform only a single
-         * ConcurrentModificationException check at the end of forEach
-         * (the most performance-sensitive method). When using forEach
-         * (as opposed to iterators), we can normally only detect
-         * interference after actions, not before. Further
-         * CME-triggering checks apply to all other possible
-         * violations of assumptions for example null or too-small
-         * elementData array given its size(), that could only have
-         * occurred due to interference.  This allows the inner loop
-         * of forEach to run without any further checks, and
-         * simplifies lambda-resolution. While this does entail a
-         * number of checks, note that in the common case of
-         * list.stream().forEach(a), no checks or other computation
-         * occur anywhere other than inside forEach itself.  The other
-         * less-often-used methods cannot take advantage of most of
-         * these streamlinings.
-         */
 
         private int index; // current index, modified on advance/split
         private int fence; // -1 until used; then one past last index
