@@ -61,8 +61,6 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * ArrayList的大小(它包含的元素的数量)。
-     *
-     * @serial
      */
     private int size;
 
@@ -150,12 +148,7 @@ public class ArrayList<E> extends AbstractList<E>
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * Increases the capacity to ensure that it can hold at least the
-     * number of elements specified by the minimum capacity argument.
      * 最小值扩容
-     *
-     * @param minCapacity the desired minimum capacity
-     * @throws OutOfMemoryError if minCapacity is less than zero
      */
     private Object[] grow(int minCapacity) {
         return elementData = Arrays.copyOf(elementData,
@@ -350,7 +343,7 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * 判断长度，看看是否需要增加一个元素的空间
      * 执行添加，添加到末尾；
-     * 私有的，供调用。
+     * 私有的，供内部调用。
      */
     private void add(E e, Object[] elementData, int s) {
         if (s == elementData.length)
@@ -373,9 +366,6 @@ public class ArrayList<E> extends AbstractList<E>
      * 列表。将当前位于该位置(如果有)的元素移动，并
      * 右边的任何后续元素(将一个元素添加到它们的索引中)。
      *
-     * @param index   index at which the specified element is to be inserted
-     * @param element element to be inserted
-     * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, E element) {
         rangeCheckForAdd(index);
@@ -394,15 +384,9 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * 移除列表中指定位置的元素。
      * 将任何后续元素向左移动(从它们的元素中减去一个)
-     * 指数)。
-     *
-     * @param index the index of the element to be removed
-     * @return the element that was removed from the list
-     * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public E remove(int index) {
         Objects.checkIndex(index, size);
-
         modCount++;
         E oldValue = elementData(index);
 
@@ -763,15 +747,10 @@ public class ArrayList<E> extends AbstractList<E>
         int cursor;       // 要返回的下一个元素的索引
         int lastRet = -1; // 返回的最后一个元素的索引;找不到为-1
         int expectedModCount = modCount;
-
-        // 防止创建合成构造函数
         Itr() {
         }
-
         /**
          * 通过判断当前的光标与数组列表的长度，来判断是否有下一个元素；
-         *
-         * @return
          */
         public boolean hasNext() {
             return cursor != size;
@@ -791,7 +770,7 @@ public class ArrayList<E> extends AbstractList<E>
              * 如果只是并发的读，是不会报错的。
              */
             if (i >= elementData.length)
-                //TODO 修改了异常的参数。
+                //修改了异常的参数。
                 throw new ConcurrentModificationException("happen exception while iterating the array list by iterator,due to write ops");
 
             //移动光标到下一位
@@ -799,7 +778,6 @@ public class ArrayList<E> extends AbstractList<E>
             //用next遍历的最后一次返回的下标。
             return (E) elementData[lastRet = i];
         }
-
         public void remove() {
             if (lastRet < 0)
                 throw new IllegalStateException();
@@ -814,7 +792,6 @@ public class ArrayList<E> extends AbstractList<E>
                 throw new ConcurrentModificationException();
             }
         }
-
         @Override
         public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
@@ -832,7 +809,6 @@ public class ArrayList<E> extends AbstractList<E>
                 checkForComodification();
             }
         }
-
         final void checkForComodification() {
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
@@ -901,39 +877,18 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a view of the portion of this list between the specified
-     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.  (If
-     * {@code fromIndex} and {@code toIndex} are equal, the returned list is
-     * empty.)  The returned list is backed by this list, so non-structural
-     * changes in the returned list are reflected in this list, and vice-versa.
-     * The returned list supports all of the optional list operations.
-     *
-     * <p>This method eliminates the need for explicit range operations (of
-     * the sort that commonly exist for arrays).  Any operation that expects
-     * a list can be used as a range operation by passing a subList view
-     * instead of a whole list.  For example, the following idiom
-     * removes a range of elements from a list:
-     * <pre>
-     *      list.subList(from, to).clear();
-     * </pre>
-     * Similar idioms may be constructed for {@link #indexOf(Object)} and
-     * {@link #lastIndexOf(Object)}, and all of the algorithms in the
-     * {@link Collections} class can be applied to a subList.
-     *
-     * <p>The semantics of the list returned by this method become undefined if
-     * the backing list (i.e., this list) is <i>structurally modified</i> in
-     * any way other than via the returned list.  (Structural modifications are
-     * those that change the size of this list, or otherwise perturb it in such
-     * a fashion that iterations in progress may yield incorrect results.)
-     *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     * @throws IllegalArgumentException  {@inheritDoc}
+     *截断的话，先做一个范围的检查；
      */
     public List<E> subList(int fromIndex, int toIndex) {
         subListRangeCheck(fromIndex, toIndex, size);
         return new SubList<>(this, fromIndex, toIndex);
     }
 
+    /**
+     * 用了第二个内部类；
+     * 截断列表类，继承抽象列表，
+     * @param <E>
+     */
     private static class SubList<E> extends AbstractList<E> implements RandomAccess {
         private final ArrayList<E> root;
         private final SubList<E> parent;
