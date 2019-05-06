@@ -55,7 +55,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
     /**
      * 哈希表的最小树形化容量
      * case:当哈希表中的容量大于这个值时，表中的桶才能进行树形化;如果只是桶内元素达到单个桶的阈值，
-     * 而总数没有达到这个，则只会扩容，不会树化。
+     * 而数组长度没有达到这个，则只会扩容，不会树化。
      */
     static final int MIN_TREEIFY_CAPACITY = 64;
 
@@ -191,8 +191,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
      * 这个表在第一次使用时进行初始化，必要时会重新分配空间。
      * 在申请空间时，大小总是2的幂，偶尔还有长度为0的情况。
      * 这里是采用Node[]节点数组，在JDK1.6，是采用Entry[]数组
-     * 注意！！！
-     * 这个table数组存放的不是全部的节点，而是存放不同key.hash的节点的根节点。
+     * NODE节点可以是一个链表，因此，这个table数组存放的不是全部的节点，而是存放不同key.hash的节点的根节点。
      */
     transient Node<K, V>[] table;
 
@@ -522,7 +521,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
     /**
      * 桶的树化
      * case:
-     * table.length>=MIN_TREEIFY_CAPACITY 这个容量为hash
+     * table.length>=MIN_TREEIFY_CAPACITY 这个容量为hash的数组长度。
      */
     final void treeifyBin(Node<K, V>[] tab, int hash) {
         int n, index;
@@ -549,41 +548,31 @@ public class HashMap<K, V> extends AbstractMap<K, V>
     }
 
     /**
-     * Copies all of the mappings from the specified map to this map.
-     * These mappings will replace any mappings that this map had for
-     * any of the keys currently in the specified map.
-     *
-     * @param m mappings to be stored in this map
-     * @throws NullPointerException if the specified map is null
+     * 将一个map全部添加进去。
      */
     public void putAll(Map<? extends K, ? extends V> m) {
         putMapEntries(m, true);
     }
 
     /**
-     * Removes the mapping for the specified key from this map if present.
-     *
-     * @param key key whose mapping is to be removed from the map
-     * @return the previous value associated with {@code key}, or
-     * {@code null} if there was no mapping for {@code key}.
-     * (A {@code null} return can also indicate that the map
-     * previously associated {@code null} with {@code key}.)
+     * 如果key存在，则从此映射中删除指定键的映射。
      */
     public V remove(Object key) {
         Node<K, V> e;
+        //value=null;matchValue=false;代表无需用值去匹配，只要键相同即可删除
         return (e = removeNode(hash(key), key, null, false, true)) == null ?
                 null : e.value;
     }
 
     /**
-     * Implements Map.remove and related methods
+     * 实现地图。移除及相关方法
      *
-     * @param hash       hash for key
-     * @param key        the key
-     * @param value      the value to match if matchValue, else ignored
-     * @param matchValue if true only remove if value is equal
-     * @param movable    if false do not move other nodes while removing
-     * @return the node, or null if none
+     * @param hash       for key
+     * @param key        key
+     * @param matchValue (如果为真)只在值相等时删除
+     * @param movable    如果为false，则在删除时不移动其他节点
+     * @param value      如果匹配值，则忽略该值
+     *                   返回节点，如果没有，返回null
      */
     final Node<K, V> removeNode(int hash, Object key, Object value,
                                 boolean matchValue, boolean movable) {
@@ -695,27 +684,27 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         public final int size() {
             return size;
         }
-
+        //清楚map中的keySet对象
         public final void clear() {
             HashMap.this.clear();
         }
-
+        //返回key的迭代器
         public final Iterator<K> iterator() {
             return new KeyIterator();
         }
-
+        //判断是否包含某key
         public final boolean contains(Object o) {
             return containsKey(o);
         }
-
+        //移除
         public final boolean remove(Object key) {
             return removeNode(hash(key), key, null, false, true) != null;
         }
-
+        //分裂迭代器
         public final Spliterator<K> spliterator() {
             return new KeySpliterator<>(HashMap.this, 0, -1, 0, 0);
         }
-
+        //foreach调用的实现
         public final void forEach(Consumer<? super K> action) {
             Node<K, V>[] tab;
             if (action == null)
@@ -868,6 +857,13 @@ public class HashMap<K, V> extends AbstractMap<K, V>
 
     // Overrides of JDK8 Map extension methods
 
+    /**
+     * 可以返回指定的默认值
+     *
+     * @param key
+     * @param defaultValue
+     * @return
+     */
     @Override
     public V getOrDefault(Object key, V defaultValue) {
         Node<K, V> e;
@@ -1304,7 +1300,6 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         Node<K, V> current;     // current entry
         int expectedModCount;  // for fast-fail
         int index;             // current slot
-
         HashIterator() {
             expectedModCount = modCount;
             Node<K, V>[] t = table;
@@ -1315,11 +1310,9 @@ public class HashMap<K, V> extends AbstractMap<K, V>
                 } while (index < t.length && (next = t[index++]) == null);
             }
         }
-
         public final boolean hasNext() {
             return next != null;
         }
-
         final Node<K, V> nextNode() {
             Node<K, V>[] t;
             Node<K, V> e = next;
@@ -1333,7 +1326,6 @@ public class HashMap<K, V> extends AbstractMap<K, V>
             }
             return e;
         }
-
         public final void remove() {
             Node<K, V> p = current;
             if (p == null)
@@ -1377,7 +1369,6 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         int fence;                  // one past last index
         int est;                    // size estimate
         int expectedModCount;       // for comodification checks
-
         HashMapSpliterator(HashMap<K, V> m, int origin,
                            int fence, int est,
                            int expectedModCount) {
@@ -1387,7 +1378,6 @@ public class HashMap<K, V> extends AbstractMap<K, V>
             this.est = est;
             this.expectedModCount = expectedModCount;
         }
-
         final int getFence() { // initialize fence and size on first use
             int hi;
             if ((hi = fence) < 0) {
@@ -1399,13 +1389,11 @@ public class HashMap<K, V> extends AbstractMap<K, V>
             }
             return hi;
         }
-
         public final long estimateSize() {
             getFence(); // force init
             return (long) est;
         }
     }
-
     static final class KeySpliterator<K, V>
             extends HashMapSpliterator<K, V>
             implements Spliterator<K> {
@@ -1546,7 +1534,6 @@ public class HashMap<K, V> extends AbstractMap<K, V>
             return (fence < 0 || est == map.size ? Spliterator.SIZED : 0);
         }
     }
-
     static final class EntrySpliterator<K, V>
             extends HashMapSpliterator<K, V>
             implements Spliterator<Map.Entry<K, V>> {
@@ -1810,7 +1797,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         }
 
         /**
-         * Forms tree of the nodes linked from this node.
+         * 表示从该节点链接的节点的树。
          *
          * @return root of tree
          */
@@ -1856,12 +1843,13 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         }
 
         /**
-         * Returns a list of non-TreeNodes replacing those linked from
-         * this node.
+         * 将连接到该树结点的其它节点转化成链表接到该节点后面，并且返回该节点。
          */
         final Node<K, V> untreeify(HashMap<K, V> map) {
             Node<K, V> hd = null, tl = null;
+            //this = treeNode；
             for (Node<K, V> q = this; q != null; q = q.next) {
+                //map只是为了使用replacementNode方法
                 Node<K, V> p = map.replacementNode(q, null);
                 if (tl == null)
                     hd = p;
@@ -1952,6 +1940,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
                 root = root.root();
             if (root == null || root.right == null ||
                     (rl = root.left) == null || rl.left == null) {
+                //可能发生链化
                 tab[index] = first.untreeify(map);  // too small
                 return;
             }
@@ -2028,9 +2017,9 @@ public class HashMap<K, V> extends AbstractMap<K, V>
         }
 
         /**
-         * Splits nodes in a tree bin into lower and upper tree bins,
-         * or untreeifies if now too small. Called only from resize;
-         * see above discussion about split bits and indices.
+         * 将树仓中的节点分成上下两个树仓，
+         * 如果现在太小，就不需要树。仅从resize调用;
+         * 参见上面关于分割位和索引的讨论。
          *
          * @param map   the map
          * @param tab   the table for recording bin heads
